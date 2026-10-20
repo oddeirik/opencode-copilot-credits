@@ -1,13 +1,13 @@
 /** @jsxImportSource @opentui/solid */
 import { Plugin } from "@opencode/plugin/tui"
 import { createSignal, Show } from "solid-js"
-import { format, formatDate, quotaText, type Display } from "./format.ts"
+import { format, formatDate, quotaText,  } from "./format.ts"
 import type { CreditSnapshot } from "./quota.ts"
 import { CopilotCredits, type DisplayOptions, type QuotaState, type SessionTotals, type UsageEvent } from "./rpc.ts"
 
 export type PluginOptions = DisplayOptions
 export type Label = PluginOptions["label"]
-export type { Display }
+
 
 /** nf-oct-copilot. Requires a Nerd Font (v3+) in the terminal. */
 const COPILOT_ICON = "\uF4B8"
@@ -222,3 +222,5 @@ export function configure(overrides: Partial<PluginOptions> = {}) {
 }
 
 export default configure()
+
+export {type Display} from "./format.ts"
