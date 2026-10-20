@@ -20,11 +20,11 @@ unpinned git installs may be cached and not pick up new commits.
 
 ### Windows
 
-If OpenCode fails to install the git spec (some Windows builds have git-backed install issues), install with npm and
+If OpenCode fails to install the git spec (some Windows builds have git-backed install issues), install with bun and
 point OpenCode at the installed folder instead:
 
 ```powershell
-npm install github:oddeirik/opencode-copilot-credits --prefix "$HOME\.config\opencode"
+bun add github:oddeirik/opencode-copilot-credits --cwd "$HOME\.config\opencode"
 ```
 
 ```jsonc
@@ -96,9 +96,11 @@ with Copilot access. The token is only sent to `api.github.com` and is never wri
 ```sh
 git clone https://github.com/oddeirik/opencode-copilot-credits
 cd opencode-copilot-credits
-npm install
-npm test           # parsing unit tests (Node 22.6+)
-npm run typecheck
+bun install
+bun test           # parsing unit tests
+bun run typecheck
+bun run check      # formatting and lint (Biome)
+bun run format     # apply formatting
 ```
 
 To run your clone in OpenCode, create `~/.config/opencode/plugins/copilot-credits/` with two files:
