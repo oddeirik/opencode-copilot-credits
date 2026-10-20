@@ -11,7 +11,7 @@ An OpenCode CLI plugin that shows GitHub Copilot credit usage:
 ## Install
 
 ```sh
-opencode plugin add github:oddeirik/opencode-copilot-credits#v0.1.0
+opencode plugin add github:oddeirik/opencode-copilot-credits
 opencode service restart
 ```
 
@@ -28,7 +28,11 @@ npm install github:oddeirik/opencode-copilot-credits --prefix "$HOME\.config\ope
 ```
 
 ```jsonc
-{ "plugins": ["C:\\Users\\<you>\\.config\\opencode\\node_modules\\opencode-copilot-credits"] }
+{
+  "plugins": [
+    "C:\\Users\\<you>\\.config\\opencode\\node_modules\\opencode-copilot-credits",
+  ],
+}
 ```
 
 OpenCode does not expand `~`, so use the full path.
@@ -43,9 +47,9 @@ optional.
   "plugins": [
     {
       "package": "github:oddeirik/opencode-copilot-credits#v0.1.0",
-      "options": { "display": "remaining", "label": "icon" }
-    }
-  ]
+      "options": { "display": "remaining", "label": "icon" },
+    },
+  ],
 }
 ```
 
@@ -100,16 +104,15 @@ npm run typecheck
 To run your clone in OpenCode, create `~/.config/opencode/plugins/copilot-credits/` with two files:
 
 ```ts title="index.ts"
-import { configure } from "file:///ABSOLUTE/PATH/TO/opencode-copilot-credits/src/server.ts"
+import { configure } from "file:///ABSOLUTE/PATH/TO/opencode-copilot-credits/src/server.ts";
 
-export default configure({ display: "used", refreshMinutes: 5 })
+export default configure({ display: "used", refreshMinutes: 5 });
 ```
 
 ```ts title="tui.ts"
-import { configure } from "file:///ABSOLUTE/PATH/TO/opencode-copilot-credits/src/tui.tsx"
+import { configure } from "file:///ABSOLUTE/PATH/TO/opencode-copilot-credits/src/tui.tsx";
 
-export default configure()
+export default configure();
 ```
 
 Then run `opencode service restart`.
-
