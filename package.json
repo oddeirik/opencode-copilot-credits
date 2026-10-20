@@ -1,0 +1,38 @@
+{
+  "name": "opencode-copilot-credits",
+  "version": "0.1.0",
+  "description": "Shows GitHub Copilot credit usage in the OpenCode TUI: used/total or remaining in the footer, and estimated credits spent per session in the sidebar.",
+  "type": "module",
+  "license": "Unlicense",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oddeirik/opencode-copilot-credits.git"
+  },
+  "files": [
+    "src"
+  ],
+  "exports": {
+    ".": "./src/server.ts",
+    "./tui": "./src/tui.tsx",
+    "./rpc": "./src/rpc.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"test/*.test.ts\""
+  },
+  "peerDependencies": {
+    "@opencode/plugin": ">=2.1.0",
+    "@opentui/core": ">=0.5.8",
+    "@opentui/solid": ">=0.5.8",
+    "solid-js": ">=1.9.0"
+  },
+  "devDependencies": {
+    "@opencode/plugin": "2.1.0",
+    "@opencode/theme": "^2.1.0",
+    "@opentui/core": "^0.6.6",
+    "@opentui/solid": "^0.6.6",
+    "@types/node": "^26.6.5",
+    "solid-js": "^1.9.12",
+    "typescript": "^5.9.3"
+  }
+}
