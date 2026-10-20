@@ -46,7 +46,7 @@ optional.
 {
   "plugins": [
     {
-      "package": "github:oddeirik/opencode-copilot-credits#v0.1.0",
+      "package": "github:oddeirik/opencode-copilot-credits",
       "options": { "display": "remaining", "label": "icon" },
     },
   ],
