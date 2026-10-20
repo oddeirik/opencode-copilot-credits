@@ -1,23 +1,13 @@
 /** @jsxImportSource @opentui/solid */
 import { Plugin } from "@opencode/plugin/tui"
-import { Show } from "solid-js"
+import { createSignal, Show } from "solid-js"
 import { format, formatDate, quotaText, type Display } from "./format.ts"
 import type { CreditSnapshot } from "./quota.ts"
-import { CopilotCredits, type QuotaState, type SessionTotals, type UsageEvent } from "./rpc.ts"
+import { CopilotCredits, type DisplayOptions, type QuotaState, type SessionTotals, type UsageEvent } from "./rpc.ts"
 
-export type Label = "text" | "icon"
+export type PluginOptions = DisplayOptions
+export type Label = PluginOptions["label"]
 export type { Display }
-
-export interface PluginOptions {
-  /** Footer turns yellow at or below this percentage remaining. */
-  readonly warnPercent: number
-  /** Footer turns red at or below this percentage remaining. */
-  readonly criticalPercent: number
-  /** "text" shows "Copilot"; "icon" shows the Copilot Nerd Font glyph. */
-  readonly label: Label
-  /** "used" shows "used/total credits used"; "remaining" shows "remaining credits left". */
-  readonly display: Display
-}
 
 /** nf-oct-copilot. Requires a Nerd Font (v3+) in the terminal. */
 const COPILOT_ICON = "\uF4B8"
@@ -37,17 +27,19 @@ function readOptions(raw: Readonly<Record<string, unknown>>): PluginOptions {
 const labelText = (label: Label) => (label === "icon" ? COPILOT_ICON : "Copilot")
 
 /**
- * Creates the plugin with options. Use this from a discovered plugin's tui.ts,
- * where cli.json options aren't available. Explicit options win over cli.json.
+ * Creates the plugin with options. Display options normally come from the
+ * server plugin's options (opencode.json); options given to this part (cli.json)
+ * win over those, and explicit options passed here win over both.
  * All data comes from the server plugin; this part only displays it.
  */
 export function configure(overrides: Partial<PluginOptions> = {}) {
   return Plugin.define({
     id: "copilot-credits",
     setup(context) {
-      const options = readOptions({ ...context.options, ...overrides })
+      const local = { ...context.options, ...overrides }
+      const [options, setOptions] = createSignal(readOptions(local))
       const theme = context.theme
-      const label = labelText(options.label)
+      const label = () => labelText(options().label)
 
       const [live, setLive] = context.storage.memory<{
         snapshot?: CreditSnapshot
@@ -57,6 +49,11 @@ export function configure(overrides: Partial<PluginOptions> = {}) {
       }>("live", { initial: { sessions: {} } })
 
       const rpc = context.client.rpc(CopilotCredits)
+
+      rpc
+        .options({})
+        .then((configured) => setOptions(readOptions({ ...(configured as Record<string, unknown>), ...local })))
+        .catch(() => {})
       const root = (sessionID: string) => context.data.session.root(sessionID)
 
       const setQuota = (state: QuotaState) =>
@@ -114,13 +111,13 @@ export function configure(overrides: Partial<PluginOptions> = {}) {
       }
 
       const color = (snapshot: CreditSnapshot) =>
-        snapshot.unlimited || snapshot.percentRemaining > options.warnPercent
+        snapshot.unlimited || snapshot.percentRemaining > options().warnPercent
           ? theme.text.muted
-          : snapshot.percentRemaining > options.criticalPercent
+          : snapshot.percentRemaining > options().criticalPercent
             ? theme.text.feedback.warning.base
             : theme.text.feedback.error.base
 
-      const footerText = (snapshot: CreditSnapshot) => `${label}: ${quotaText(snapshot, options.display)}`
+      const footerText = (snapshot: CreditSnapshot) => `${label()}: ${quotaText(snapshot, options().display)}`
 
       const removeFooter = context.ui.slot({
         append: "prompt.footer.status",
@@ -130,7 +127,7 @@ export function configure(overrides: Partial<PluginOptions> = {}) {
               when={live.snapshot}
               fallback={
                 <Show when={live.error}>
-                  <text fg={theme.text.muted}>{`${label}: n/a`}</text>
+                  <text fg={theme.text.muted}>{`${label()}: n/a`}</text>
                 </Show>
               }
             >
@@ -151,13 +148,13 @@ export function configure(overrides: Partial<PluginOptions> = {}) {
             <Show when={isCopilot()}>
               <box flexDirection="column">
                 <text fg={theme.text.base}>
-                  <b>{`${label} credits`}</b>
+                  <b>{`${label()} credits`}</b>
                 </text>
                 <text fg={theme.text.muted}>{`${format(entry()?.credits ?? 0, 2)} used this session`}</text>
                 <Show when={live.snapshot}>
                   {(snapshot) => (
                     <text fg={color(snapshot())}>
-                      {`${quotaText(snapshot(), options.display)} · resets ${formatDate(snapshot().resetDate)}`}
+                      {`${quotaText(snapshot(), options().display)} · resets ${formatDate(snapshot().resetDate)}`}
                     </text>
                   )}
                 </Show>

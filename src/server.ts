@@ -1,6 +1,6 @@
 import { Plugin } from "@opencode/plugin"
 import { fetchCreditSnapshot, QuotaError } from "./quota.ts"
-import { CopilotCredits, type QuotaState, type SessionTotals } from "./rpc.ts"
+import { CopilotCredits, type DisplayOptions, type QuotaState, type SessionTotals } from "./rpc.ts"
 import { resolveToken, TOKEN_ENV } from "./token.ts"
 import { readNanoAiu, toCredits } from "./usage.ts"
 
@@ -21,7 +21,7 @@ const toTotals = (stored: StoredTotals | undefined): SessionTotals => ({
   requests: stored?.requests ?? 0,
 })
 
-export interface ServerOptions {
+export interface ServerOptions extends DisplayOptions {
   /** How often to poll GitHub for the account quota, in minutes. */
   readonly refreshMinutes: number
 }
@@ -44,6 +44,14 @@ export function configure(overrides: Partial<ServerOptions> = {}) {
         typeof raw.refreshMinutes === "number" && Number.isFinite(raw.refreshMinutes)
           ? Math.max(1, raw.refreshMinutes)
           : 5
+
+      // Passed on to the TUI part as given; it validates them and applies defaults.
+      const display: { -readonly [K in keyof DisplayOptions]?: DisplayOptions[K] } = {}
+      for (const name of ["warnPercent", "criticalPercent"] as const) {
+        if (typeof raw[name] === "number" && Number.isFinite(raw[name])) display[name] = raw[name]
+      }
+      if (raw.label === "text" || raw.label === "icon") display.label = raw.label
+      if (raw.display === "used" || raw.display === "remaining") display.display = raw.display
 
       const roots = new Map<string, Promise<string>>()
       const rootOf = (sessionID: string): Promise<string> => {
@@ -123,6 +131,7 @@ export function configure(overrides: Partial<ServerOptions> = {}) {
       }
 
       const registration = await ctx.rpc.register(CopilotCredits, {
+        options: async () => ({ ...display }),
         quota: async (input) => {
           start()
           const { refresh: force } = (input ?? {}) as { refresh?: boolean }

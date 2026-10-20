@@ -10,84 +10,54 @@ An OpenCode CLI plugin that shows GitHub Copilot credit usage:
 
 ## Install
 
-Install straight from GitHub (no npm registry needed). Pin a release tag:
-
 ```sh
 opencode plugin add github:oddeirik/opencode-copilot-credits#v0.1.0
 opencode service restart
 ```
 
-Or add it by hand to `~/.config/opencode/opencode.json`:
+Start OpenCode; `/plugins` should list `copilot-credits`. To update, install the new tag. Pinning a tag matters:
+unpinned git installs may be cached and not pick up new commits.
+
+### Windows
+
+If OpenCode fails to install the git spec (some Windows builds have git-backed install issues), install with npm and
+point OpenCode at the installed folder instead:
+
+```powershell
+npm install github:oddeirik/opencode-copilot-credits --prefix "$HOME\.config\opencode"
+```
+
+```jsonc
+{ "plugins": ["C:\\Users\\<you>\\.config\\opencode\\node_modules\\opencode-copilot-credits"] }
+```
+
+OpenCode does not expand `~`, so use the full path.
+
+## Configure
+
+Everything is configured in one place, the plugin entry in `~/.config/opencode/opencode.json`. All options are
+optional.
 
 ```jsonc
 {
   "plugins": [
     {
       "package": "github:oddeirik/opencode-copilot-credits#v0.1.0",
-      "options": { "refreshMinutes": 5 }
+      "options": { "display": "remaining", "label": "icon" }
     }
   ]
 }
 ```
 
-Start OpenCode; `/plugins` should list `copilot-credits`. Update by changing the tag and restarting. Unpinned git
-specs may be cached and not pick up new commits.
+Restart with `opencode service restart` after changing options.
 
-The server part does all the fetching; the TUI part only displays what the server reports. `refreshMinutes` goes to
-the server part (`opencode.json`). The display options below go to the TUI part, which loads automatically with the
-server plugin using its defaults. To change them, add a `cli.json` entry (`~/.config/opencode/cli.json`) with
-`options`, for example `{ "label": "icon", "display": "remaining" }`.
-
-### Windows
-
-If OpenCode fails to install the git spec (some Windows builds have git-backed install issues), install with npm and
-point OpenCode at the installed folder:
-
-```powershell
-npm install github:oddeirik/opencode-copilot-credits --prefix "$HOME\.config\opencode"
-```
-
-Then use the absolute path in `opencode.json`. OpenCode does not expand `~`:
-
-```jsonc
-{ "plugins": ["C:\\Users\\<you>\\.config\\opencode\\node_modules\\opencode-copilot-credits"] }
-```
-
-## Local development
-
-```sh
-git clone https://github.com/oddeirik/opencode-copilot-credits
-cd opencode-copilot-credits
-npm install
-```
-
-Create `~/.config/opencode/plugins/copilot-credits/` with two files, pointing at your clone:
-
-```ts title="tui.ts"
-import { configure } from "file:///ABSOLUTE/PATH/TO/opencode-copilot-credits/src/tui.tsx"
-
-export default configure({ label: "text", display: "used" })
-```
-
-```ts title="index.ts"
-// Server part: fetches the account quota and reads the per-response credit cost from Copilot responses.
-import { configure } from "file:///ABSOLUTE/PATH/TO/opencode-copilot-credits/src/server.ts"
-
-export default configure({ refreshMinutes: 5 })
-```
-
-Then run `opencode service restart`.
-
-> A `file:///C:/…` entry in `cli.json` `plugins` did not load on Windows (OpenCode 2.1.0), which is why the plugin
-> folder is used for local development.
-
-| Option            | Part   | Default  | Description                                                                    |
-| ----------------- | ------ | -------- | ------------------------------------------------------------------------------ |
-| `label`           | TUI    | `"text"` | `"text"` shows `Copilot`; `"icon"` shows the Copilot icon instead.             |
-| `display`         | TUI    | `"used"` | `"used"` shows `7,112/15,000 credits used`; `"remaining"` shows `7,921 credits left`. |
-| `warnPercent`     | TUI    | `25`     | Footer turns yellow at or below this % remaining.                              |
-| `criticalPercent` | TUI    | `10`     | Footer turns red at or below this % remaining.                                 |
-| `refreshMinutes`  | Server | `5`      | How often to poll GitHub while idle.                                           |
+| Option            | Default  | Description                                                                           |
+| ----------------- | -------- | ------------------------------------------------------------------------------------- |
+| `display`         | `"used"` | `"used"` shows `7,112/15,000 credits used`; `"remaining"` shows `7,921 credits left`. |
+| `label`           | `"text"` | `"text"` shows `Copilot`; `"icon"` shows the Copilot icon instead.                    |
+| `warnPercent`     | `25`     | Footer turns yellow at or below this % remaining.                                     |
+| `criticalPercent` | `10`     | Footer turns red at or below this % remaining.                                        |
+| `refreshMinutes`  | `5`      | How often to poll GitHub while idle.                                                  |
 
 ### Icon label
 
@@ -117,9 +87,29 @@ with Copilot access. The token is only sent to `api.github.com` and is never wri
   - Only responses received while the plugin is loaded are counted, so sessions from before installing it start at 0.
 - An organization- or enterprise-wide budget isn't visible through this endpoint; only your own entitlement is.
 
-## Tests
+## Development
 
 ```sh
+git clone https://github.com/oddeirik/opencode-copilot-credits
+cd opencode-copilot-credits
+npm install
 npm test           # parsing unit tests (Node 22.6+)
 npm run typecheck
 ```
+
+To run your clone in OpenCode, create `~/.config/opencode/plugins/copilot-credits/` with two files:
+
+```ts title="index.ts"
+import { configure } from "file:///ABSOLUTE/PATH/TO/opencode-copilot-credits/src/server.ts"
+
+export default configure({ display: "used", refreshMinutes: 5 })
+```
+
+```ts title="tui.ts"
+import { configure } from "file:///ABSOLUTE/PATH/TO/opencode-copilot-credits/src/tui.tsx"
+
+export default configure()
+```
+
+Then run `opencode service restart`.
+

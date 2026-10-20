@@ -48,9 +48,37 @@ const quotaState = {
   additionalProperties: false,
 } as const
 
+/** Display settings. Configured on the server part and read by the TUI part, so they can live in one place. */
+export interface DisplayOptions {
+  /** Footer turns yellow at or below this percentage remaining. */
+  readonly warnPercent: number
+  /** Footer turns red at or below this percentage remaining. */
+  readonly criticalPercent: number
+  /** "text" shows "Copilot"; "icon" shows the Copilot Nerd Font glyph. */
+  readonly label: "text" | "icon"
+  /** "used" shows "used/total credits used"; "remaining" shows "remaining credits left". */
+  readonly display: "used" | "remaining"
+}
+
+const displayOptions = {
+  type: "object",
+  properties: {
+    warnPercent: { type: "number" },
+    criticalPercent: { type: "number" },
+    label: { type: "string" },
+    display: { type: "string" },
+  },
+  additionalProperties: false,
+} as const
+
 export const CopilotCredits = Rpc.define({
   id: "copilot-credits",
   methods: {
+    /** Display options configured on the server part. Only the ones that were set are returned. */
+    options: {
+      input: { type: "object", properties: {}, additionalProperties: false },
+      output: displayOptions,
+    },
     /** Monthly account quota. Pass refresh to fetch it from GitHub now instead of using the cached value. */
     quota: {
       input: {
